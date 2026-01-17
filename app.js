@@ -1,3 +1,6 @@
+const worker = new Worker("worker.js", { type: "module" });
+let selectedFile = null;
+
 const dropzone = document.getElementById("dropzone");
 const fileInput = document.getElementById("fileInput");
 
@@ -27,6 +30,8 @@ function handleFile(file) {
     alert("File is too large.");
     return;
   }
+
+  selectedFile = file;
 
   fileNameEl.textContent = file.name;
   fileSizeEl.textContent = formatSize(file.size);
@@ -62,5 +67,37 @@ fileInput.addEventListener("change", (e) => {
 });
 
 convertBtn.addEventListener("click", () => {
-  alert("Conversion logic will be added next.");
+  if (!selectedFile) return;
+
+  convertBtn.textContent = "Converting…";
+  convertBtn.disabled = true;
+
+  worker.postMessage({
+    action: "convert",
+    file: selectedFile
+  });
 });
+
+worker.onmessage = (event) => {
+  const { success, output, error } = event.data;
+
+  convertBtn.textContent = "Convert";
+  convertBtn.disabled = false;
+
+  if (!success) {
+    alert("Conversion failed: " + error);
+    return;
+  }
+
+  const blob = new Blob([output], { type: "audio/mpeg" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "output.mp3";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  URL.revokeObjectURL(url);
+};

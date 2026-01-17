@@ -25,6 +25,31 @@
         <input type="file" id="fileInput" hidden />
       </label>
       <p class="hint">Max size: 200 MB · Supported: mp4, avi, mov, mp3</p>
+
+      <!DOCTYPE html>
+      
+        <h1>Private File Converter</h1>
+        <p>Files are processed locally in your browser. Nothing is uploaded.</p>
+      
+        <input
+          type="file"
+          id="fileInput"
+          accept="video/*,audio/*"
+        />
+      
+        <button id="convertBtn">
+          Convert
+        </button>
+      
+        <progress id="progress" value="0" max="1"></progress>
+      
+        <div id="status">Idle</div>
+      
+        <a id="download" style="display:none"></a>
+      
+        <!-- IMPORTANT -->
+        <script type="module" src="./app.js"></script>
+
     </section>
 
     <section id="fileInfo" class="file-info hidden">
@@ -55,6 +80,7 @@
     </footer>
   </main>
 
-  <script src="app.js"></script>
+<!--  <script src="app.js"></script>
+-->
 </body>
 </html>

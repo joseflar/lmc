@@ -1,66 +1,89 @@
-const dropzone = document.getElementById("dropzone");
-const fileInput = document.getElementById("fileInput");
+import { FFmpeg } from '@ffmpeg/ffmpeg';
+import { fetchFile, toBlobURL } from '@ffmpeg/util';
 
-const fileInfo = document.getElementById("fileInfo");
-const fileNameEl = document.getElementById("fileName");
-const fileSizeEl = document.getElementById("fileSize");
-const fileTypeEl = document.getElementById("fileType");
-const convertBtn = document.getElementById("convertBtn");
+const ffmpeg = new FFmpeg();
+let ffmpegLoaded = false;
 
-const MAX_SIZE_MB = 200;
-const ALLOWED_EXT = ["mp4", "avi", "mov", "mp3"];
+// UI elements
+const fileInput = document.getElementById('fileInput');
+const convertBtn = document.getElementById('convertBtn');
+const progressEl = document.getElementById('progress');
+const statusEl = document.getElementById('status');
+const downloadLink = document.getElementById('download');
 
-function formatSize(bytes) {
-  const mb = bytes / (1024 * 1024);
-  return `${mb.toFixed(2)} MB`;
+// Load FFmpeg lazily
+async function loadFFmpeg() {
+  if (ffmpegLoaded) return;
+
+  statusEl.textContent = 'Loading converter…';
+
+  const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
+
+  await ffmpeg.load({
+    coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+    wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm')
+  });
+
+  ffmpeg.on('progress', ({ progress }) => {
+    progressEl.value = progress;
+  });
+
+  ffmpegLoaded = true;
+  statusEl.textContent = 'Ready';
 }
 
-function handleFile(file) {
-  const ext = file.name.split(".").pop().toLowerCase();
-
-  if (!ALLOWED_EXT.includes(ext)) {
-    alert("Unsupported file type.");
+// Conversion handler
+convertBtn.addEventListener('click', async () => {
+  const file = fileInput.files[0];
+  if (!file) {
+    alert('Please select a file');
     return;
   }
 
-  if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-    alert("File is too large.");
-    return;
+  progressEl.value = 0;
+  downloadLink.style.display = 'none';
+  statusEl.textContent = 'Preparing…';
+
+  try {
+    await loadFFmpeg();
+
+    const inputExt = file.name.split('.').pop();
+    const inputName = `input.${inputExt}`;
+    const outputName = 'output.mp3';
+
+    statusEl.textContent = 'Reading file…';
+    await ffmpeg.writeFile(inputName, await fetchFile(file));
+
+    statusEl.textContent = 'Converting…';
+    await ffmpeg.exec([
+      '-i', inputName,
+      '-vn',
+      '-acodec', 'libmp3lame',
+      '-ab', '192k',
+      outputName
+    ]);
+
+    statusEl.textContent = 'Finalizing…';
+    const data = await ffmpeg.readFile(outputName);
+    const blob = new Blob([data.buffer], { type: 'audio/mpeg' });
+    const url = URL.createObjectURL(blob);
+
+    downloadLink.href = url;
+    downloadLink.download =
+      file.name.replace(/\.[^/.]+$/, '') + '.mp3';
+    downloadLink.textContent = 'Download MP3';
+    downloadLink.style.display = 'inline-block';
+
+    // Cleanup to avoid memory bloat
+    await ffmpeg.deleteFile(inputName);
+    await ffmpeg.deleteFile(outputName);
+
+    statusEl.textContent = 'Done';
+
+  } catch (err) {
+    console.error(err);
+    statusEl.textContent = 'Error';
+    alert('Conversion failed. See console for details.');
   }
-
-  fileNameEl.textContent = file.name;
-  fileSizeEl.textContent = formatSize(file.size);
-  fileTypeEl.textContent = file.type || "unknown";
-
-  fileInfo.classList.remove("hidden");
-  convertBtn.classList.add("enabled");
-  convertBtn.disabled = false;
-}
-
-dropzone.addEventListener("dragover", (e) => {
-  e.preventDefault();
-  dropzone.classList.add("dragover");
 });
 
-dropzone.addEventListener("dragleave", () => {
-  dropzone.classList.remove("dragover");
-});
-
-dropzone.addEventListener("drop", (e) => {
-  e.preventDefault();
-  dropzone.classList.remove("dragover");
-
-  if (e.dataTransfer.files.length > 0) {
-    handleFile(e.dataTransfer.files[0]);
-  }
-});
-
-fileInput.addEventListener("change", (e) => {
-  if (e.target.files.length > 0) {
-    handleFile(e.target.files[0]);
-  }
-});
-
-convertBtn.addEventListener("click", () => {
-  alert("Conversion logic will be added next.");
-});

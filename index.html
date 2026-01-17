@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Local Media Converter – Private, Fast, In-Browser</title>
+  <meta name="description" content="Convert audio and video files directly in your browser. No uploads. No tracking. Your files never leave your device."/>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+  <main class="container">
+    <header>
+      <h1>Convert Media Files — Locally</h1>
+      <p class="subtitle">
+        Audio & video conversion directly in your browser.
+        <strong>No uploads. No accounts. No tracking.</strong>
+      </p>
+    </header>
+
+    <section id="dropzone" class="dropzone">
+      <p>Drag & drop a file here</p>
+      <span>or</span>
+      <label class="file-button">
+        Select a file
+        <input type="file" id="fileInput" hidden />
+      </label>
+      <p class="hint">Max size: 200 MB · Supported: mp4, avi, mov, mp3</p>
+    </section>
+
+    <section id="fileInfo" class="file-info hidden">
+      <h3>Selected file</h3>
+      <ul>
+        <li><strong>Name:</strong> <span id="fileName"></span></li>
+        <li><strong>Size:</strong> <span id="fileSize"></span></li>
+        <li><strong>Type:</strong> <span id="fileType"></span></li>
+      </ul>
+      <button id="convertBtn" disabled>Convert (coming next)</button>
+    </section>
+
+    <section class="trust">
+      <h2>Why this exists</h2>
+      <ul>
+        <li>✅ Files never leave your device</li>
+        <li>✅ Conversion runs via WebAssembly</li>
+        <li>✅ Works offline after first load</li>
+        <li>✅ No ads, no trackers</li>
+      </ul>
+    </section>
+
+    <footer>
+      <p>
+        Built for people who value privacy and simplicity.<br/>
+        <small>Conversion powered by FFmpeg compiled to WebAssembly.</small>
+      </p>
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
